@@ -19,7 +19,7 @@ public:
 	Game(const Game&) = delete;
 	Game& operator=(const Game&) = delete;
 
-	bool initialize(int wndw_width = 1024, int wndw_height = 720, std::string wndw_name = "OpenGL Engine", bool wndw_capturemouse = true);
+	bool initialize(int wndw_width = 1024, int wndw_height = 720, std::string wndw_name = "Shader Training", bool wndw_capturemouse = true);
 	void run();
 	void close();
 

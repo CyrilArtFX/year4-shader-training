@@ -57,10 +57,7 @@
     <ClCompile Include="Objects\object.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
-    <ClCompile Include="Materials\litMaterial.cpp">
-      <Filter>Fichiers sources</Filter>
-    </ClCompile>
-    <ClCompile Include="Materials\flatEmissiveMaterial.cpp">
+    <ClCompile Include="Materials\litMaterialDirLight.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
   </ItemGroup>
@@ -107,18 +104,13 @@
     <ClInclude Include="Rendering\material.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
-    <ClInclude Include="Materials\litMaterial.h">
-      <Filter>Fichiers d%27en-tête</Filter>
-    </ClInclude>
-    <ClInclude Include="Materials\flatEmissiveMaterial.h">
+    <ClInclude Include="Materials\litMaterialDirLight.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\object_lit.vert" />
     <None Include="Shaders\object_lit.frag" />
-    <None Include="Shaders\flat_emissive.frag" />
-    <None Include="Shaders\flat_emissive.vert" />
     <None Include="Shaders\object_lit_dirlight.frag" />
   </ItemGroup>
 </Project>

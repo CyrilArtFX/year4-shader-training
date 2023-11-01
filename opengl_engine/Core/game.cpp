@@ -3,8 +3,7 @@
 #include <Rendering/shader.h>
 #include <Objects/object.h>
 
-#include <Materials/litMaterial.h>
-#include <Materials/flatEmissiveMaterial.h>
+#include <Materials/litMaterialDirLight.h>
 
 
 Game::Game()
@@ -78,26 +77,22 @@ void Game::run()
 
 
 	//  build and compile shaders
-	//Shader litObjectShader("Shaders/object_lit.vert", "Shaders/object_lit.frag");
 	Shader litObjectShaderDirLight("Shaders/object_lit.vert", "Shaders/object_lit_dirlight.frag");
-	Shader flatEmissiveShader("Shaders/flat_emissive.vert", "Shaders/flat_emissive.frag");
 
 	//  manually set the textures unit on the shader (need to be done only once)
 	litObjectShaderDirLight.use(); //  activate the shader on which you want to set the texture unit before doing it
 	litObjectShaderDirLight.setInt("material.diffuse", 0);
 	litObjectShaderDirLight.setInt("material.specular", 1);
-	litObjectShaderDirLight.setInt("material.emissive", 2);
 
 
 	//  create textures
 	std::shared_ptr<Texture> container_diffuse = std::make_shared<Texture>("Resources/container2.png", GL_RGBA, false);
 	std::shared_ptr<Texture> container_specular = std::make_shared<Texture>("Resources/container2_specular.png", GL_RGBA, false);
-	std::shared_ptr<Texture> container_emissive = std::make_shared<Texture>("Resources/matrix.jpg", GL_RGB, false);
 
 
 	//  light data
 	Vector3 lightColor{ 1.0f, 1.0f, 1.0f };
-	lightPos = Vector3{ 1.2f, 1.0f, 2.0f };
+	Vector3 lightDirection{ -0.4f, -0.5f, 1.0f };
 
 
 	//  cube vertices data
@@ -146,30 +141,16 @@ void Game::run()
 		-0.5f,  0.5f, -0.5f,   0.0f,  1.0f,  0.0f,   0.0f, 1.0f
 	};
 
-	std::shared_ptr<LitMaterial> containerMat = std::make_shared<LitMaterial>(litObjectShaderDirLight, container_diffuse, container_specular);
-	std::shared_ptr<FlatEmissiveMaterial> lightSourceMat = std::make_shared<FlatEmissiveMaterial>(flatEmissiveShader, lightColor);
-
-
-	//  TODO : change the vertex array - object relation system
-	//  actually, the engine creates 3 differents VAO and VBO for this 3 cubes
-	//  but those three differents objects could use the same VAO and VBO
+	std::shared_ptr<LitMaterialDirLight> containerMat = std::make_shared<LitMaterialDirLight>(litObjectShaderDirLight, container_diffuse, container_specular);
 
 	Object cube_1(containerMat, cubeVertices, 36);
 	Object cube_2(containerMat, cubeVertices, 36);
 	Object cube_3(containerMat, cubeVertices, 36);
 
-
-	Object lightCube(lightSourceMat, cubeVertices, 36);
-	lightCube.setPosition(lightPos);
-	lightCube.setScale(0.2f);
-
-
 	cube_1.setPosition(Vector3{ 0.0f, 0.0f, 0.0f });
 	cube_2.setPosition(Vector3{ 2.0f, 1.5f, 2.0f });
 	cube_3.setPosition(Vector3{ 2.0f, -1.0f, -1.0f });
-	
 
-	Vector3 dirLight{ -0.4f, -0.5f, 1.0f };
 
 
 
@@ -190,7 +171,7 @@ void Game::run()
 
 		//  rendering part
 		// ----------------
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClearColor(0.0f, 0.0f, 0.0f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //  clear window with flat color
 
 
@@ -206,23 +187,13 @@ void Game::run()
 		Matrix4 view = camera->GetViewMatrix();
 		Matrix4 projection = Matrix4::createPerspectiveFOV(Maths::toRadians(camera->getFov()), window->getWidth(), window->getHeigth(), 0.1f, 100.0f);
 
-		flatEmissiveShader.use();
-
-		flatEmissiveShader.setMatrix4("view", view.getAsFloatPtr());
-		flatEmissiveShader.setMatrix4("projection", projection.getAsFloatPtr());
-
-		lightSourceMat->setEmissiveColor(lightColor);
-		lightCube.setPosition(lightPos);
-		lightCube.draw();
-
-
 
 		litObjectShaderDirLight.use();
 
 		litObjectShaderDirLight.setVec3("light.ambient", lightColor * 0.1f);
 		litObjectShaderDirLight.setVec3("light.diffuse", lightColor * 0.7f);
 		litObjectShaderDirLight.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-		litObjectShaderDirLight.setVec3("light.direction", dirLight);
+		litObjectShaderDirLight.setVec3("light.direction", lightDirection);
 
 		litObjectShaderDirLight.setVec3("viewPos", camera->getPosition());
 
@@ -241,13 +212,11 @@ void Game::run()
 	}
 
 
-	//  delete all resources that are not necessary anymore (optionnal)
+	//  delete all resources that are not necessary anymore
 	cube_1.deleteObject();
 	cube_2.deleteObject();
 	cube_3.deleteObject();
-	lightCube.deleteObject();
 	litObjectShaderDirLight.deleteProgram();
-	flatEmissiveShader.deleteProgram();
 }
 
 
@@ -287,28 +256,6 @@ void Game::processInput(GLFWwindow* glWindow)
 
 	if (glfwGetKey(glWindow, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 		camera->ProcessKeyboard(Down, deltaTime);
-
-
-	//  move light (temp)
-	float light_speed = 2.0f;
-
-	if (glfwGetKey(glWindow, GLFW_KEY_UP) == GLFW_PRESS)
-		lightPos += Vector3{ 0.0f, 0.0f, 1.0f } * deltaTime * light_speed;
-
-	if (glfwGetKey(glWindow, GLFW_KEY_DOWN) == GLFW_PRESS)
-		lightPos += Vector3{ 0.0f, 0.0f, -1.0f } * deltaTime * light_speed;
-
-	if (glfwGetKey(glWindow, GLFW_KEY_LEFT) == GLFW_PRESS)
-		lightPos += Vector3{ -1.0f, 0.0f, 0.0f } * deltaTime * light_speed;
-
-	if (glfwGetKey(glWindow, GLFW_KEY_RIGHT) == GLFW_PRESS)
-		lightPos += Vector3{ 1.0f, 0.0f, 0.0f } * deltaTime * light_speed;
-
-	if (glfwGetKey(glWindow, GLFW_KEY_KP_ADD) == GLFW_PRESS)
-		lightPos += Vector3{ 0.0f, 1.0f, 0.0f } * deltaTime * light_speed;
-
-	if (glfwGetKey(glWindow, GLFW_KEY_KP_SUBTRACT) == GLFW_PRESS)
-		lightPos += Vector3{ 0.0f, -1.0f, 0.0f } * deltaTime * light_speed;
 }
 
 

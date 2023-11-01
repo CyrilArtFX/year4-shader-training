@@ -136,8 +136,7 @@
     <ClCompile Include="Core\game.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="main.cpp" />
-    <ClCompile Include="Materials\flatEmissiveMaterial.cpp" />
-    <ClCompile Include="Materials\litMaterial.cpp" />
+    <ClCompile Include="Materials\litMaterialDirLight.cpp" />
     <ClCompile Include="Maths\Matrix4.cpp" />
     <ClCompile Include="Maths\Quaternion.cpp" />
     <ClCompile Include="Maths\Vector2.cpp" />
@@ -152,8 +151,7 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\game.h" />
-    <ClInclude Include="Materials\flatEmissiveMaterial.h" />
-    <ClInclude Include="Materials\litMaterial.h" />
+    <ClInclude Include="Materials\litMaterialDirLight.h" />
     <ClInclude Include="Maths\Maths.h" />
     <ClInclude Include="Maths\Matrix4.h" />
     <ClInclude Include="Maths\Quaternion.h" />
@@ -169,8 +167,6 @@
     <ClInclude Include="Core\window.h" />
   </ItemGroup>
   <ItemGroup>
-    <None Include="Shaders\flat_emissive.frag" />
-    <None Include="Shaders\flat_emissive.vert" />
     <None Include="Shaders\object_lit.frag" />
     <None Include="Shaders\object_lit.vert" />
     <None Include="Shaders\object_lit_dirlight.frag" />
