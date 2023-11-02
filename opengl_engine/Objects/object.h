@@ -10,7 +10,7 @@
 class Object
 {
 public:
-	Object(std::weak_ptr<Material> material_, const float* vertices, unsigned int nbVertices, const unsigned int* indices = 0, unsigned int nbIndices = 0);
+	Object(std::weak_ptr<Material> material_, std::weak_ptr<Material> secondaryMaterial_, const float* vertices, unsigned int nbVertices, const unsigned int* indices = 0, unsigned int nbIndices = 0);
 
 	void draw();
 	void deleteObject();
@@ -21,12 +21,16 @@ public:
 	void setScale(Vector3 newScale);
 	void setScale(float newUniformScale);
 
+	void TriggerChangeMaterial(bool triggerSecondaryMat);
+
 private:
 	void computeMatrix();
 
 	VertexArray vertexArray;
 
 	std::shared_ptr<Material> material;
+	std::shared_ptr<Material> primaryMaterial;
+	std::shared_ptr<Material> secondaryMaterial;
 
 	Vector3 position{ Vector3::zero };
 	Vector3 scale{ Vector3::one };

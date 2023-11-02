@@ -1,7 +1,7 @@
 #include "object.h"
 
-Object::Object(std::weak_ptr<Material> material_, const float* vertices, unsigned int nbVertices, const unsigned int* indices, unsigned int nbIndices)
-	: material(material_.lock()), vertexArray(vertices, nbVertices, indices, nbIndices)
+Object::Object(std::weak_ptr<Material> material_, std::weak_ptr<Material> secondaryMaterial_, const float* vertices, unsigned int nbVertices, const unsigned int* indices, unsigned int nbIndices)
+	: material(material_.lock()), primaryMaterial(material_.lock()), secondaryMaterial(secondaryMaterial_.lock()), vertexArray(vertices, nbVertices, indices, nbIndices)
 {
 	computeMatrix();
 }
@@ -55,6 +55,11 @@ void Object::setScale(Vector3 newScale)
 void Object::setScale(float newUniformScale)
 {
 	setScale(Vector3{ newUniformScale, newUniformScale, newUniformScale });
+}
+
+void Object::TriggerChangeMaterial(bool triggerSecondaryMat)
+{
+	material = triggerSecondaryMat ? secondaryMaterial : primaryMaterial;
 }
 
 

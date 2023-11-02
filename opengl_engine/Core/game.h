@@ -50,7 +50,18 @@ private:
 	float lastY = 0;
 
 
-	//  will be put in a scene logic when I will do that
-	Vector3 lightPos;
+
+	//  light demo
+	bool rgbTrigger{ false };
+	bool rgbActivated{ false };
+	Vector3 lightColor{ 1.0f, 1.0f, 1.0f };
+	float lightRotationFactor{ 0.3f };
+
+	//  tessellation demo
+	bool tessellationTrigger{ false };
+	bool tessellationActivated{ false };
+	bool tessLevelTrigger{ false };
+	int tessLevelInner{ 3 };
+	int tessLevelOuter{ 3 };
 };
 

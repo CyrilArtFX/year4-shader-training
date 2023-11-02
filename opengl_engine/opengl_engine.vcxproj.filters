@@ -60,6 +60,9 @@
     <ClCompile Include="Materials\litMaterialDirLight.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
+    <ClCompile Include="Materials\tessellationMaterial.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Rendering\shader.h">
@@ -107,10 +110,15 @@
     <ClInclude Include="Materials\litMaterialDirLight.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="Materials\tessellationMaterial.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\object_lit.vert" />
     <None Include="Shaders\object_lit.frag" />
     <None Include="Shaders\object_lit_dirlight.frag" />
+    <None Include="Shaders\tessellation.vert" />
+    <None Include="Shaders\tessellation.frag" />
   </ItemGroup>
 </Project>

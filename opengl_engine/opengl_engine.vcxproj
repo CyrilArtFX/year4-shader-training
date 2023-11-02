@@ -148,6 +148,7 @@
     <ClCompile Include="Rendering\shader.cpp" />
     <ClCompile Include="Rendering\texture.cpp" />
     <ClCompile Include="Core\window.cpp" />
+    <ClCompile Include="Materials\tessellationMaterial.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\game.h" />
@@ -165,11 +166,14 @@
     <ClInclude Include="Rendering\shader.h" />
     <ClInclude Include="Rendering\texture.h" />
     <ClInclude Include="Core\window.h" />
+    <ClInclude Include="Materials\tessellationMaterial.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\object_lit.frag" />
     <None Include="Shaders\object_lit.vert" />
     <None Include="Shaders\object_lit_dirlight.frag" />
+    <None Include="Shaders\tessellation.frag" />
+    <None Include="Shaders\tessellation.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

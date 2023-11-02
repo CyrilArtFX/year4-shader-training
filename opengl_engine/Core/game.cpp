@@ -4,6 +4,7 @@
 #include <Objects/object.h>
 
 #include <Materials/litMaterialDirLight.h>
+#include <Materials/tessellationMaterial.h>
 
 
 Game::Game()
@@ -78,6 +79,7 @@ void Game::run()
 
 	//  build and compile shaders
 	Shader litObjectShaderDirLight("Shaders/object_lit.vert", "Shaders/object_lit_dirlight.frag");
+	Shader tessellationShader("Shaders/tessellation.vert", "Shaders/tessellation.frag");
 
 	//  manually set the textures unit on the shader (need to be done only once)
 	litObjectShaderDirLight.use(); //  activate the shader on which you want to set the texture unit before doing it
@@ -89,10 +91,6 @@ void Game::run()
 	std::shared_ptr<Texture> container_diffuse = std::make_shared<Texture>("Resources/container2.png", GL_RGBA, false);
 	std::shared_ptr<Texture> container_specular = std::make_shared<Texture>("Resources/container2_specular.png", GL_RGBA, false);
 
-
-	//  light data
-	Vector3 lightColor{ 1.0f, 1.0f, 1.0f };
-	Vector3 lightDirection{ -0.4f, -0.5f, 1.0f };
 
 
 	//  cube vertices data
@@ -142,10 +140,11 @@ void Game::run()
 	};
 
 	std::shared_ptr<LitMaterialDirLight> containerMat = std::make_shared<LitMaterialDirLight>(litObjectShaderDirLight, container_diffuse, container_specular);
+	std::shared_ptr<TessellationMaterial> tesselationMat = std::make_shared<TessellationMaterial>(tessellationShader);
 
-	Object cube_1(containerMat, cubeVertices, 36);
-	Object cube_2(containerMat, cubeVertices, 36);
-	Object cube_3(containerMat, cubeVertices, 36);
+	Object cube_1(containerMat, tesselationMat, cubeVertices, 36);
+	Object cube_2(containerMat, tesselationMat, cubeVertices, 36);
+	Object cube_3(containerMat, tesselationMat, cubeVertices, 36);
 
 	cube_1.setPosition(Vector3{ 0.0f, 0.0f, 0.0f });
 	cube_2.setPosition(Vector3{ 2.0f, 1.5f, 2.0f });
@@ -177,9 +176,34 @@ void Game::run()
 
 
 		float timeValue = glfwGetTime();
-		/*lightColor.x = sin(timeValue * 2.0f);
-		lightColor.y = sin(timeValue * 0.7f);
-		lightColor.z = sin(timeValue * 1.3f);*/
+
+		if (rgbActivated)
+		{
+			lightColor.x = sin(timeValue * 2.0f);
+			lightColor.y = sin(timeValue * 0.7f);
+			lightColor.z = sin(timeValue * 1.3f);
+		}
+		else
+		{
+			lightColor = Vector3{ 1.0f, 1.0f, 1.0f };
+		}
+
+		Vector3 lightDirection = Vector3{ Maths::cos(lightRotationFactor), -1.0f, Maths::sin(lightRotationFactor) };
+
+		if (tessellationActivated)
+		{
+			cube_1.TriggerChangeMaterial(true);
+			cube_2.TriggerChangeMaterial(true);
+			cube_3.TriggerChangeMaterial(true);
+		}
+		else
+		{
+			cube_1.TriggerChangeMaterial(false);
+			cube_2.TriggerChangeMaterial(false);
+			cube_3.TriggerChangeMaterial(false);
+		}
+
+
 
 
 
@@ -188,17 +212,28 @@ void Game::run()
 		Matrix4 projection = Matrix4::createPerspectiveFOV(Maths::toRadians(camera->getFov()), window->getWidth(), window->getHeigth(), 0.1f, 100.0f);
 
 
-		litObjectShaderDirLight.use();
+		if (tessellationActivated)
+		{
+			tessellationShader.use();
 
-		litObjectShaderDirLight.setVec3("light.ambient", lightColor * 0.1f);
-		litObjectShaderDirLight.setVec3("light.diffuse", lightColor * 0.7f);
-		litObjectShaderDirLight.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-		litObjectShaderDirLight.setVec3("light.direction", lightDirection);
+			tessellationShader.setMatrix4("view", view.getAsFloatPtr());
+			tessellationShader.setMatrix4("projection", projection.getAsFloatPtr());
+		}
+		else
+		{
+			litObjectShaderDirLight.use();
 
-		litObjectShaderDirLight.setVec3("viewPos", camera->getPosition());
+			litObjectShaderDirLight.setVec3("light.ambient", lightColor * 0.1f);
+			litObjectShaderDirLight.setVec3("light.diffuse", lightColor * 0.7f);
+			litObjectShaderDirLight.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
+			litObjectShaderDirLight.setVec3("light.direction", lightDirection);
 
-		litObjectShaderDirLight.setMatrix4("view", view.getAsFloatPtr());
-		litObjectShaderDirLight.setMatrix4("projection", projection.getAsFloatPtr());
+			litObjectShaderDirLight.setVec3("viewPos", camera->getPosition());
+
+			litObjectShaderDirLight.setMatrix4("view", view.getAsFloatPtr());
+			litObjectShaderDirLight.setMatrix4("projection", projection.getAsFloatPtr());
+		}
+
 
 		cube_1.draw();
 		cube_2.draw();
@@ -256,6 +291,63 @@ void Game::processInput(GLFWwindow* glWindow)
 
 	if (glfwGetKey(glWindow, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 		camera->ProcessKeyboard(Down, deltaTime);
+
+
+	//  trigger rgb
+	if (glfwGetKey(glWindow, GLFW_KEY_SEMICOLON) == GLFW_PRESS)
+	{
+		if(!rgbTrigger) rgbActivated = !rgbActivated;
+		rgbTrigger = true;
+	}
+	if (glfwGetKey(glWindow, GLFW_KEY_SEMICOLON) == GLFW_RELEASE)
+	{
+		rgbTrigger = false;
+	}
+
+
+	//  rotate light
+	if (glfwGetKey(glWindow, GLFW_KEY_P) == GLFW_PRESS)
+		lightRotationFactor += 5.0f * deltaTime;
+
+
+	//  trigger tessellation
+	if (glfwGetKey(glWindow, GLFW_KEY_T) == GLFW_PRESS)
+	{
+		if (!tessellationTrigger) tessellationActivated = !tessellationActivated;
+		tessellationTrigger = true;
+	}
+	if (glfwGetKey(glWindow, GLFW_KEY_T) == GLFW_RELEASE)
+	{
+		tessellationTrigger = false;
+	}
+
+
+	//  change tessellation inner and outer levels
+	if (glfwGetKey(glWindow, GLFW_KEY_UP) == GLFW_PRESS)
+	{
+		if (!tessLevelTrigger) tessLevelInner = Maths::max(tessLevelInner + 1, 10);
+		tessLevelTrigger = true;
+	}
+	if (glfwGetKey(glWindow, GLFW_KEY_DOWN) == GLFW_PRESS)
+	{
+		if (!tessLevelTrigger) tessLevelInner = Maths::min(tessLevelInner - 1, 1);
+		tessLevelTrigger = true;
+	}
+	if (glfwGetKey(glWindow, GLFW_KEY_LEFT) == GLFW_PRESS)
+	{
+		if (!tessLevelTrigger) tessLevelOuter = Maths::min(tessLevelOuter - 1, 1);
+		tessLevelTrigger = true;
+	}
+	if (glfwGetKey(glWindow, GLFW_KEY_RIGHT) == GLFW_PRESS)
+	{
+		if (!tessLevelTrigger) tessLevelOuter = Maths::max(tessLevelOuter + 1, 10);
+		tessLevelTrigger = true;
+	}
+	if (glfwGetKey(glWindow, GLFW_KEY_UP) == GLFW_RELEASE && glfwGetKey(glWindow, GLFW_KEY_DOWN) == GLFW_RELEASE &&
+		glfwGetKey(glWindow, GLFW_KEY_LEFT) == GLFW_RELEASE && glfwGetKey(glWindow, GLFW_KEY_RIGHT) == GLFW_RELEASE)
+	{
+		tessLevelTrigger = false;
+	}
 }
 
 
