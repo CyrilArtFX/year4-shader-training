@@ -2,37 +2,71 @@
 
 #include <Maths/Vector3.h>
 
-Shader::Shader(const char* vertexPath, const char* fragmentPath)
+//  TODO for later implementation of tessellation and geometry shaders in the real engine :
+//  do 5 functions for each shader (that handle the null) and call them in the constructor (instead of doing 5161 if conditions)
+//  and compile the shader program according to the shaders that are present
+//  also it will be necessary to reimplement opengl and glad in the project with a 4.x version (here I used the 4.5)
+//  also the shader check part for each shader can be put in a function
+
+Shader::Shader(const char* vertexPath, const char* fragmentPath, const char* tesselationControlPath, const char* tesselationEvaluationPath)
 {
+	bool has_tess = !(tesselationControlPath == "" && tesselationEvaluationPath == "");
+
 	//  Step 1 : retrieve the shaders source code from filePaths
 	//  ========================================================
 
 	std::string vertexCode;
+	std::string tescCode;
+	std::string teseCode;
 	std::string fragmentCode;
 	std::ifstream vShaderFile;
+	std::ifstream tscShaderFile;
+	std::ifstream tseShaderFile;
 	std::ifstream fShaderFile;
 
 	//  ensure ifstream objects can throw exceptions
 	vShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+	tscShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
+	tseShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 	fShaderFile.exceptions(std::ifstream::failbit | std::ifstream::badbit);
 
 	try
 	{
 		//  open files
 		vShaderFile.open(vertexPath);
+		if (has_tess)
+		{
+			tscShaderFile.open(tesselationControlPath);
+			tseShaderFile.open(tesselationEvaluationPath);
+		}
 		fShaderFile.open(fragmentPath);
-		std::stringstream vShaderStream, fShaderStream;
+		std::stringstream vShaderStream, tscShaderStream, tseShaderStream, fShaderStream;
 
 		//  read files's buffer contents into streams
 		vShaderStream << vShaderFile.rdbuf();
+		if (has_tess)
+		{
+			tscShaderStream << tscShaderFile.rdbuf();
+			tseShaderStream << tseShaderFile.rdbuf();
+		}
 		fShaderStream << fShaderFile.rdbuf();
 
 		//  close file handlers
 		vShaderFile.close();
+		if (has_tess)
+		{
+			tscShaderFile.close();
+			tseShaderFile.close();
+		}
 		fShaderFile.close();
 
 		//  convert stream into string
 		vertexCode = vShaderStream.str();
+		if (has_tess)
+		{
+			tescCode = tscShaderStream.str();
+			teseCode = tseShaderStream.str();
+		}
 		fragmentCode = fShaderStream.str();
 	}
 	catch (std::ifstream::failure e)
@@ -41,13 +75,15 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath)
 	}
 
 	const char* vShaderCode = vertexCode.c_str();
+	const char* tscShaderCode = tescCode.c_str();
+	const char* tseShaderCode = teseCode.c_str();
 	const char* fShaderCode = fragmentCode.c_str();
 
 
 	//  Step 2 : compile shaders and link them into the program
 	//  =======================================================
 
-	unsigned int vertex, fragment;
+	unsigned int vertex, tesc, tese, fragment;
 	int success;
 	char infoLog[512];
 
@@ -63,6 +99,33 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath)
 		std::cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << std::endl;
 	} //  check if vertex shader has correctly compiled
 
+	if (has_tess)
+	{
+		//  tessellation control shader
+		tesc = glCreateShader(GL_TESS_CONTROL_SHADER);
+		glShaderSource(tesc, 1, &tscShaderCode, NULL);
+		glCompileShader(tesc);
+
+		glGetShaderiv(tesc, GL_COMPILE_STATUS, &success);
+		if (!success)
+		{
+			glGetShaderInfoLog(tesc, 512, NULL, infoLog);
+			std::cout << "ERROR::SHADER::TESSELLATION_CONTROL::COMPILATION_FAILED\n" << infoLog << std::endl;
+		} //  check if tessellation control shader has correctly compiled
+
+		//  tessellation evaluation shader
+		tese = glCreateShader(GL_TESS_EVALUATION_SHADER);
+		glShaderSource(tese, 1, &tscShaderCode, NULL);
+		glCompileShader(tese);
+
+		glGetShaderiv(tese, GL_COMPILE_STATUS, &success);
+		if (!success)
+		{
+			glGetShaderInfoLog(tese, 512, NULL, infoLog);
+			std::cout << "ERROR::SHADER::TESSELLATION_EVALUATION::COMPILATION_FAILED\n" << infoLog << std::endl;
+		} //  check if tessellation evaluation shader has correctly compiled
+	}
+
 	//  fragment shader
 	fragment = glCreateShader(GL_FRAGMENT_SHADER);
 	glShaderSource(fragment, 1, &fShaderCode, NULL);
@@ -75,9 +138,15 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath)
 		std::cout << "ERROR::SHADER::FRAGMENT::COMPILATION_FAILED\n" << infoLog << std::endl;
 	} //  check if fragment shader has correctly compiled
 
+
 	//  shader program
 	ID = glCreateProgram();
 	glAttachShader(ID, vertex);
+	if (has_tess)
+	{
+		glAttachShader(ID, tesc);
+		glAttachShader(ID, tese);
+	}
 	glAttachShader(ID, fragment);
 	glLinkProgram(ID);
 
@@ -90,6 +159,11 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath)
 
 	//  delete shaders once they're link into the program
 	glDeleteShader(vertex);
+	if (has_tess)
+	{
+		glDeleteShader(tesc);
+		glDeleteShader(tese);
+	}
 	glDeleteShader(fragment);
 }
 

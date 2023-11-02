@@ -173,6 +173,8 @@
     <None Include="Shaders\object_lit.vert" />
     <None Include="Shaders\object_lit_dirlight.frag" />
     <None Include="Shaders\tessellation.frag" />
+    <None Include="Shaders\tessellation.tesc" />
+    <None Include="Shaders\tessellation.tese" />
     <None Include="Shaders\tessellation.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

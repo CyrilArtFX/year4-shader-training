@@ -10,7 +10,7 @@
 class Shader
 {
 public:
-	Shader(const char* vertexPath, const char* fragmentPath); //  constructor reads and build the shader
+	Shader(const char* vertexPath, const char* fragmentPath, const char* tesselationControlPath = "", const char* tesselationEvaluationPath = ""); //  constructor reads and build the shader
 
 	void use(); //  use (activate) the shader
 	void deleteProgram();

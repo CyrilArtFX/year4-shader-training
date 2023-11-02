@@ -120,5 +120,7 @@
     <None Include="Shaders\object_lit_dirlight.frag" />
     <None Include="Shaders\tessellation.vert" />
     <None Include="Shaders\tessellation.frag" />
+    <None Include="Shaders\tessellation.tesc" />
+    <None Include="Shaders\tessellation.tese" />
   </ItemGroup>
 </Project>
