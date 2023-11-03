@@ -325,22 +325,22 @@ void Game::processInput(GLFWwindow* glWindow)
 	//  change tessellation inner and outer levels
 	if (glfwGetKey(glWindow, GLFW_KEY_UP) == GLFW_PRESS)
 	{
-		if (!tessLevelTrigger) tessLevelInner = Maths::max(tessLevelInner + 1, 10);
+		if (!tessLevelTrigger) tessLevelInner = Maths::min(tessLevelInner + 1, 10);
 		tessLevelTrigger = true;
 	}
 	if (glfwGetKey(glWindow, GLFW_KEY_DOWN) == GLFW_PRESS)
 	{
-		if (!tessLevelTrigger) tessLevelInner = Maths::min(tessLevelInner - 1, 1);
+		if (!tessLevelTrigger) tessLevelInner = Maths::max(tessLevelInner - 1, 1);
 		tessLevelTrigger = true;
 	}
 	if (glfwGetKey(glWindow, GLFW_KEY_LEFT) == GLFW_PRESS)
 	{
-		if (!tessLevelTrigger) tessLevelOuter = Maths::min(tessLevelOuter - 1, 1);
+		if (!tessLevelTrigger) tessLevelOuter = Maths::max(tessLevelOuter - 1, 1);
 		tessLevelTrigger = true;
 	}
 	if (glfwGetKey(glWindow, GLFW_KEY_RIGHT) == GLFW_PRESS)
 	{
-		if (!tessLevelTrigger) tessLevelOuter = Maths::max(tessLevelOuter + 1, 10);
+		if (!tessLevelTrigger) tessLevelOuter = Maths::min(tessLevelOuter + 1, 10);
 		tessLevelTrigger = true;
 	}
 	if (glfwGetKey(glWindow, GLFW_KEY_UP) == GLFW_RELEASE && glfwGetKey(glWindow, GLFW_KEY_DOWN) == GLFW_RELEASE &&
