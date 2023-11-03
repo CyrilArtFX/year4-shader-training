@@ -149,6 +149,7 @@
     <ClCompile Include="Rendering\texture.cpp" />
     <ClCompile Include="Core\window.cpp" />
     <ClCompile Include="Materials\tessellationMaterial.cpp" />
+    <ClCompile Include="Utils\Color.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Core\game.h" />
@@ -167,6 +168,7 @@
     <ClInclude Include="Rendering\texture.h" />
     <ClInclude Include="Core\window.h" />
     <ClInclude Include="Materials\tessellationMaterial.h" />
+    <ClInclude Include="Utils\Color.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\object_lit.frag" />

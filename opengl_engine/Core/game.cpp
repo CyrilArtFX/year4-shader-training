@@ -179,13 +179,11 @@ void Game::run()
 
 		if (rgbActivated)
 		{
-			lightColor.x = sin(timeValue * 2.0f);
-			lightColor.y = sin(timeValue * 0.7f);
-			lightColor.z = sin(timeValue * 1.3f);
+			lightColor = Color::HSV(static_cast<int>(timeValue * 150.0f) % 360, 100.0f, 100.0f);
 		}
 		else
 		{
-			lightColor = Vector3{ 1.0f, 1.0f, 1.0f };
+			lightColor = Color::white;
 		}
 
 		Vector3 lightDirection = Vector3{ Maths::cos(lightRotationFactor), -1.0f, Maths::sin(lightRotationFactor) };
@@ -228,8 +226,8 @@ void Game::run()
 		{
 			litObjectShaderDirLight.use();
 
-			litObjectShaderDirLight.setVec3("light.ambient", lightColor * 0.1f);
-			litObjectShaderDirLight.setVec3("light.diffuse", lightColor * 0.7f);
+			litObjectShaderDirLight.setVec3("light.ambient", lightColor.toVector() * 0.1f);
+			litObjectShaderDirLight.setVec3("light.diffuse", lightColor.toVector() * 0.7f);
 			litObjectShaderDirLight.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
 			litObjectShaderDirLight.setVec3("light.direction", lightDirection);
 
@@ -296,6 +294,9 @@ void Game::processInput(GLFWwindow* glWindow)
 
 	if (glfwGetKey(glWindow, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
 		camera->ProcessKeyboard(Down, deltaTime);
+
+
+	//  TODO : create a full system for inputs to allow press one frame 
 
 
 	//  trigger rgb

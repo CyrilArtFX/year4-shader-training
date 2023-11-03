@@ -7,6 +7,7 @@
 
 #include <Maths/Matrix4.h>
 #include <Maths/Vector3.h>
+#include <Utils/Color.h>
 
 #include <string>
 #include <iostream>
@@ -54,7 +55,7 @@ private:
 	//  light demo
 	bool rgbTrigger{ false };
 	bool rgbActivated{ false };
-	Vector3 lightColor{ 1.0f, 1.0f, 1.0f };
+	Color lightColor{ Color::white };
 	float lightRotationFactor{ 0.3f };
 
 	//  tessellation demo
