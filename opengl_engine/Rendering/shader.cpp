@@ -115,7 +115,7 @@ Shader::Shader(const char* vertexPath, const char* fragmentPath, const char* tes
 
 		//  tessellation evaluation shader
 		tese = glCreateShader(GL_TESS_EVALUATION_SHADER);
-		glShaderSource(tese, 1, &tscShaderCode, NULL);
+		glShaderSource(tese, 1, &tseShaderCode, NULL);
 		glCompileShader(tese);
 
 		glGetShaderiv(tese, GL_COMPILE_STATUS, &success);

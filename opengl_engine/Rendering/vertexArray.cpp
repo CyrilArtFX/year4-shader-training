@@ -32,6 +32,10 @@ VertexArray::VertexArray(const float* vertices, unsigned int nbVertices_, const 
 	//  texture coordinates attribute
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, nbDataPerVertex * sizeof(float), (void*)(6 * sizeof(float)));
 	glEnableVertexAttribArray(2);
+
+
+	//  TODO : find a better way to set this parameter (it feels very hardcoded actually and I don't like this)
+	glPatchParameteri(GL_PATCH_VERTICES, 3);
 }
 
 

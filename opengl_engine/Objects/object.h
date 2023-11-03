@@ -12,7 +12,7 @@ class Object
 public:
 	Object(std::weak_ptr<Material> material_, std::weak_ptr<Material> secondaryMaterial_, const float* vertices, unsigned int nbVertices, const unsigned int* indices = 0, unsigned int nbIndices = 0);
 
-	void draw();
+	void draw(bool drawForTessellation = false);
 	void deleteObject();
 
 	void setMaterial(std::weak_ptr<Material> newMat);

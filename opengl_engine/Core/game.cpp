@@ -79,7 +79,7 @@ void Game::run()
 
 	//  build and compile shaders
 	Shader litObjectShaderDirLight("Shaders/object_lit.vert", "Shaders/object_lit_dirlight.frag");
-	Shader tessellationShader("Shaders/tessellation.vert", "Shaders/tessellation.frag");
+	Shader tessellationShader("Shaders/tessellation.vert", "Shaders/tessellation.frag", "Shaders/tessellation.tesc", "Shaders/tessellation.tese");
 
 	//  manually set the textures unit on the shader (need to be done only once)
 	litObjectShaderDirLight.use(); //  activate the shader on which you want to set the texture unit before doing it
@@ -216,8 +216,13 @@ void Game::run()
 		{
 			tessellationShader.use();
 
+			glPointSize(5.0f);
+
 			tessellationShader.setMatrix4("view", view.getAsFloatPtr());
 			tessellationShader.setMatrix4("projection", projection.getAsFloatPtr());
+
+			tessellationShader.setFloat("inner", tessLevelInner);
+			tessellationShader.setFloat("outer", tessLevelOuter);
 		}
 		else
 		{
@@ -235,9 +240,9 @@ void Game::run()
 		}
 
 
-		cube_1.draw();
-		cube_2.draw();
-		cube_3.draw();
+		cube_1.draw(tessellationActivated);
+		cube_2.draw(tessellationActivated);
+		cube_3.draw(tessellationActivated);
 
 
 

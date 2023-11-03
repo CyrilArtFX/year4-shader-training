@@ -7,7 +7,7 @@ Object::Object(std::weak_ptr<Material> material_, std::weak_ptr<Material> second
 }
 
 
-void Object::draw()
+void Object::draw(bool drawForTessellation)
 {
 	//  we assume that the shader is already in usage, because the renderer that call this function should already have set some uniforms on it
 
@@ -18,12 +18,19 @@ void Object::draw()
 
 	vertexArray.setActive();
 
-	if (vertexArray.getNBIndices() == 0)
+	if (drawForTessellation)
 	{
+		glPolygonMode(GL_FRONT_AND_BACK, GL_LINE);
+		glDrawArrays(GL_PATCHES, 0, vertexArray.getNBVertices());
+	}
+	else if (vertexArray.getNBIndices() == 0)
+	{
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glDrawArrays(GL_TRIANGLES, 0, vertexArray.getNBVertices());
 	}
 	else
 	{
+		glPolygonMode(GL_FRONT_AND_BACK, GL_FILL);
 		glDrawElements(GL_TRIANGLES, vertexArray.getNBIndices(), GL_UNSIGNED_INT, 0);
 	}
 }
