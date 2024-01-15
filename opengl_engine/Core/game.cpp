@@ -8,8 +8,8 @@
 #include <iostream>
 
 
-constexpr int WORKGROUP_SIZE = 32;
-constexpr int NUM_WORKGROUPS = 16;
+constexpr int WORKGROUP_SIZE = 64; //  number of work item per work group
+constexpr int NUM_WORKGROUPS = 20; //  number of work group
 constexpr int FLOCK_SIZE = (NUM_WORKGROUPS * WORKGROUP_SIZE);
 
 struct FlockMember
@@ -88,9 +88,9 @@ bool Game::initialize(int wndw_width, int wndw_height, std::string wndw_name, bo
 
 void Game::run()
 {
-	// ================
-	//  initialization
-	// ================
+	// =========================
+	//      initialization
+	// =========================
 
 	//  shaders
 	Shader squareShader("Shaders/compute.vert", "Shaders/compute.frag");
@@ -124,22 +124,24 @@ void Game::run()
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	glBindVertexArray(0); //  reset
+	glBindVertexArray(0); //  reset activated VAO
 
 
 	//  buffers for the flock
 	// -----------------------
-	unsigned int flockBuffer[2];
-	unsigned int flockRenderVao[2];
-	unsigned int geometryBuffer;
-	unsigned int frameIndex = 0;
+	unsigned int flockBuffer[2]; //  flock use a double storage buffer because the compute shader needs to read values and updates others at the same time
+	unsigned int flockRenderVao[2]; //  double VAO to use the double buffer
 
+	unsigned int geometryBuffer;
+
+	//  set the storage buffers
 	glGenBuffers(2, flockBuffer);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, flockBuffer[0]);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, FLOCK_SIZE * sizeof(FlockMember), NULL, GL_DYNAMIC_COPY);
 	glBindBuffer(GL_SHADER_STORAGE_BUFFER, flockBuffer[1]);
 	glBufferData(GL_SHADER_STORAGE_BUFFER, FLOCK_SIZE * sizeof(FlockMember), NULL, GL_DYNAMIC_COPY);
 
+	//  a basic VBO
 	glGenBuffers(1, &geometryBuffer);
 	glBindBuffer(GL_ARRAY_BUFFER, geometryBuffer);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(squareVertices), squareVertices, GL_STATIC_DRAW);
@@ -153,13 +155,14 @@ void Game::run()
 		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 
 		glBindBuffer(GL_ARRAY_BUFFER, flockBuffer[i]);
-		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(FlockMember), NULL);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(FlockMember), NULL); //  allows the compute shader to pass the computed position to the vertex shader
 		glVertexAttribDivisor(1, 1);
 
 		glEnableVertexAttribArray(0);
 		glEnableVertexAttribArray(1);
 	}
 
+	//  set the initial flockMember values (random positions)
 	glBindBuffer(GL_ARRAY_BUFFER, flockBuffer[0]);
 	FlockMember* ptr = reinterpret_cast<FlockMember*>(glMapBufferRange(GL_ARRAY_BUFFER, 0, FLOCK_SIZE * sizeof(FlockMember),GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT));
 
@@ -172,10 +175,12 @@ void Game::run()
 	glUnmapBuffer(GL_ARRAY_BUFFER);
 
 
+	unsigned int frameIndex = 0; //  used to swap between the two buffers and VAO of flock
 
-	// ===========
-	//  main loop
-	// ===========
+
+	// =========================
+	//         main loop
+	// =========================
 	while (!glfwWindowShouldClose(window->getGLFWwindow()))
 	{
 		//  time logic
@@ -194,12 +199,13 @@ void Game::run()
 		// -------------
 		squareComputeShader.use();
 
-		squareComputeShader.setVec3("repulsion", mouseXPos, mouseYPos, 0.0f);
+		squareComputeShader.setVec3("repulsion", mouseXPos / windowWidth, mouseYPos / windowHeight, 0.0f); //  pass the position of the red square to the compute shader
 
+		//  bind the storage buffer that will be use to read datas (0) and the storage buffer that will be use to write datas (1)
 		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, flockBuffer[frameIndex]);
-		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, flockBuffer[frameIndex ^ 1]);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, flockBuffer[frameIndex ^ 1]); 
 
-		glDispatchCompute(NUM_WORKGROUPS, 1, 1);
+		glDispatchCompute(NUM_WORKGROUPS, 1, 1); //  use the compute shader
 
 
 		//  rendering part
@@ -223,7 +229,7 @@ void Game::run()
 		squareShader.setFloat("scale", 0.02f);
 		squareShader.setVec3("color", 0.0f, 0.0f, 1.0f);
 
-		glBindVertexArray(flockRenderVao[frameIndex]);
+		glBindVertexArray(flockRenderVao[frameIndex]); //  draw the blue squares with datas that are use for reading this frame
 		glDrawArraysInstanced(GL_TRIANGLES, 0, 6, FLOCK_SIZE);
 
 
@@ -233,18 +239,21 @@ void Game::run()
 
 
 
-		//  actualise frame index
+		//  actualise frame index (datas that were used for writing will now be read this frame and datas that were used for reading will be overriden)
 		frameIndex ^= 1;
 	}
 
 
-	// ================
-	//  end of program
-	// ================
+	// =========================
+	//           end
+	// =========================
 
 	//  delete all resources that are not necessary anymore
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
+	glDeleteVertexArrays(2, flockRenderVao);
+	glDeleteBuffers(2, flockBuffer);
+	glDeleteBuffers(1, &geometryBuffer);
 	squareShader.deleteProgram();
 	squareMouseShader.deleteProgram();
 	squareComputeShader.deleteProgram();
