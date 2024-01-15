@@ -1,8 +1,24 @@
 #include "game.h"
 
 #include <Rendering/shader.h>
+#include <ComputeShader/ComputeShader.h>
+
+#include <Utils/Random.h>
 
 #include <iostream>
+
+
+constexpr int WORKGROUP_SIZE = 32;
+constexpr int NUM_WORKGROUPS = 16;
+constexpr int FLOCK_SIZE = (NUM_WORKGROUPS * WORKGROUP_SIZE);
+
+struct FlockMember
+{
+	Vector3 position;
+	unsigned int : 32;
+	Vector3 velocity;
+	unsigned int : 32;
+};
 
 
 Game::Game()
@@ -72,59 +88,118 @@ bool Game::initialize(int wndw_width, int wndw_height, std::string wndw_name, bo
 
 void Game::run()
 {
-	//  run initialization
+	// ================
+	//  initialization
+	// ================
 
+	//  shaders
 	Shader squareShader("Shaders/compute.vert", "Shaders/compute.frag");
+	Shader squareMouseShader("Shaders/compute_mouse.vert", "Shaders/compute.frag");
+	ComputeShader squareComputeShader("Shaders/compute.glsl");
 
 	//  square vertices data
 	float squareVertices[] =
 	{
 		 1.0f,  1.0f, 0.0f,
 		 1.0f, -1.0f, 0.0f,
+		-1.0f,  1.0f, 0.0f,
+		 1.0f, -1.0f, 0.0f,
 		-1.0f, -1.0f, 0.0f,
 		-1.0f,  1.0f, 0.0f
 	};
 
-	unsigned int squareIndices[] = 
-	{
-		0, 1, 3,
-		1, 2, 3 
-	};
 
-	unsigned int VBO, VAO, EBO;
+	//	buffers for the mouse square
+	// ------------------------------
+	unsigned int VBO, VAO;
 	glGenVertexArrays(1, &VAO);
 	glGenBuffers(1, &VBO);
-	glGenBuffers(1, &EBO);
 
 	glBindVertexArray(VAO);
 
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(squareVertices), squareVertices, GL_STATIC_DRAW);
 
-	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(squareIndices), squareIndices, GL_STATIC_DRAW);
-
 	// position attribute
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-	
+	glBindVertexArray(0); //  reset
+
+
+	//  buffers for the flock
+	// -----------------------
+	unsigned int flockBuffer[2];
+	unsigned int flockRenderVao[2];
+	unsigned int geometryBuffer;
+	unsigned int frameIndex = 0;
+
+	glGenBuffers(2, flockBuffer);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, flockBuffer[0]);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, FLOCK_SIZE * sizeof(FlockMember), NULL, GL_DYNAMIC_COPY);
+	glBindBuffer(GL_SHADER_STORAGE_BUFFER, flockBuffer[1]);
+	glBufferData(GL_SHADER_STORAGE_BUFFER, FLOCK_SIZE * sizeof(FlockMember), NULL, GL_DYNAMIC_COPY);
+
+	glGenBuffers(1, &geometryBuffer);
+	glBindBuffer(GL_ARRAY_BUFFER, geometryBuffer);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(squareVertices), squareVertices, GL_STATIC_DRAW);
+
+	glGenVertexArrays(2, flockRenderVao); 
+
+	for (int i = 0; i < 2; i++)
+	{
+		glBindVertexArray(flockRenderVao[i]);
+		glBindBuffer(GL_ARRAY_BUFFER, geometryBuffer);
+		glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+
+		glBindBuffer(GL_ARRAY_BUFFER, flockBuffer[i]);
+		glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(FlockMember), NULL);
+		glVertexAttribDivisor(1, 1);
+
+		glEnableVertexAttribArray(0);
+		glEnableVertexAttribArray(1);
+	}
+
+	glBindBuffer(GL_ARRAY_BUFFER, flockBuffer[0]);
+	FlockMember* ptr = reinterpret_cast<FlockMember*>(glMapBufferRange(GL_ARRAY_BUFFER, 0, FLOCK_SIZE * sizeof(FlockMember),GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT));
+
+	for (int i = 0; i < FLOCK_SIZE; i++)
+	{
+		ptr[i].position = (Vector3(Random::randomFloat(), Random::randomFloat(), 0.0f) - Vector3(0.5f, 0.5f, 0.0f)) * 2.0f;
+		ptr[i].velocity = Vector3::zero;
+	}
+
+	glUnmapBuffer(GL_ARRAY_BUFFER);
 
 
 
+	// ===========
 	//  main loop
+	// ===========
 	while (!glfwWindowShouldClose(window->getGLFWwindow()))
 	{
 		//  time logic
+		// ------------
 		float currentFrame = glfwGetTime();
 		deltaTime = currentFrame - lastFrame;
 		lastFrame = currentFrame;
 
 
-
 		//  inputs part
 		// -------------
 		processInput(window->getGLFWwindow());
+
+
+		//  update part
+		// -------------
+		squareComputeShader.use();
+
+		squareComputeShader.setVec3("repulsion", mouseXPos, mouseYPos, 0.0f);
+
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 0, flockBuffer[frameIndex]);
+		glBindBufferBase(GL_SHADER_STORAGE_BUFFER, 1, flockBuffer[frameIndex ^ 1]);
+
+		glDispatchCompute(NUM_WORKGROUPS, 1, 1);
 
 
 		//  rendering part
@@ -133,36 +208,46 @@ void Game::run()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //  clear window with flat color
 
 
-		//  draw
-		squareShader.use();
-		squareShader.setFloat("scale", 0.02f);
+		//  mouse square part
+		squareMouseShader.use();
+		squareMouseShader.setFloat("scale", 0.02f);
+		squareMouseShader.setVec3("mousePos", mouseXPos / windowWidth, mouseYPos / windowHeight, 0.0f);
+		squareMouseShader.setVec3("color", 1.0f, 0.0f, 0.0f);
+
+		glBindVertexArray(VAO);
+		glDrawArrays(GL_TRIANGLES, 0, 6);
+
 
 		//  computed squares part
-		squareShader.setVec3("position", 0.5f, 0.0f, 0.0f);
+		squareShader.use();
+		squareShader.setFloat("scale", 0.02f);
 		squareShader.setVec3("color", 0.0f, 0.0f, 1.0f);
 
-		glBindVertexArray(VAO);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
-		//  mouse square part
-		squareShader.setVec3("position", mouseXPos / windowWidth, mouseYPos / windowHeight, 0.0f);
-		squareShader.setVec3("color", 1.0f, 0.0f, 0.0f);
-
-		glBindVertexArray(VAO);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
+		glBindVertexArray(flockRenderVao[frameIndex]);
+		glDrawArraysInstanced(GL_TRIANGLES, 0, 6, FLOCK_SIZE);
 
 
 		//  events and buffer swap
 		glfwSwapBuffers(window->getGLFWwindow());
 		glfwPollEvents();
+
+
+
+		//  actualise frame index
+		frameIndex ^= 1;
 	}
 
+
+	// ================
+	//  end of program
+	// ================
 
 	//  delete all resources that are not necessary anymore
 	glDeleteVertexArrays(1, &VAO);
 	glDeleteBuffers(1, &VBO);
-	glDeleteBuffers(1, &EBO);
 	squareShader.deleteProgram();
+	squareMouseShader.deleteProgram();
+	squareComputeShader.deleteProgram();
 }
 
 

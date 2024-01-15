@@ -1,3 +1,4 @@
+#pragma once
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 
@@ -10,7 +11,7 @@
 #include <Utils/Color.h>
 
 #include <string>
-#pragma once
+
 
 class Game
 {

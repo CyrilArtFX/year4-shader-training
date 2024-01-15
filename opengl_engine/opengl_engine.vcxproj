@@ -171,11 +171,13 @@
     <ClInclude Include="Core\window.h" />
     <ClInclude Include="Materials\tessellationMaterial.h" />
     <ClInclude Include="Utils\Color.h" />
+    <ClInclude Include="Utils\Random.h" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\compute.frag" />
     <None Include="Shaders\compute.glsl" />
     <None Include="Shaders\compute.vert" />
+    <None Include="Shaders\compute_mouse.vert" />
     <None Include="Shaders\object_lit.frag" />
     <None Include="Shaders\object_lit.vert" />
     <None Include="Shaders\object_lit_dirlight.frag" />
