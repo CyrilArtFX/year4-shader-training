@@ -10,7 +10,6 @@
 #include <Utils/Color.h>
 
 #include <string>
-#include <iostream>
 #pragma once
 
 class Game
@@ -36,33 +35,19 @@ public:
 private:
 	//  window
 	std::unique_ptr<Window> window;
+	float windowWidth = 0.0f;
+	float windowHeight = 0.0f;
 
 	//  time
 	float deltaTime = 0.0f;
 	float lastFrame = 0.0f;
 
-	//  camera
-	std::unique_ptr<Camera> camera;
-
-
 	//  mouse
 	bool firstMouse = true;
-	float lastX = 0;
-	float lastY = 0;
+	float lastX = 0.0f;
+	float lastY = 0.0f;
 
-
-
-	//  light demo
-	bool rgbTrigger{ false };
-	bool rgbActivated{ false };
-	Color lightColor{ Color::white };
-	float lightRotationFactor{ 0.3f };
-
-	//  tessellation demo
-	bool tessellationTrigger{ false };
-	bool tessellationActivated{ false };
-	bool tessLevelTrigger{ false };
-	int tessLevelInner{ 3 };
-	int tessLevelOuter{ 3 };
+	float mouseXPos = 0.0f;
+	float mouseYPos = 0.0f;
 };
 

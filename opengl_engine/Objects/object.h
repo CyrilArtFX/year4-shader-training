@@ -4,6 +4,7 @@
 
 #include <Rendering/vertexArray.h>
 #include <Rendering/material.h>
+#include <memory>
 
 
 

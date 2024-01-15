@@ -4,13 +4,15 @@
 
 #include <string>
 
-class Shader
+
+class ComputeShader
 {
 public:
-	Shader(const char* vertexPath, const char* fragmentPath, const char* tesselationControlPath = "", const char* tesselationEvaluationPath = ""); //  constructor reads and build the shader
+	ComputeShader(const char* path); //  constructor reads and build the compute shader
 
 	void use(); //  use (activate) the shader
 	void deleteProgram();
+
 
 	//  setter uniform fonctions
 	void setBool(const std::string& name, bool value) const;
@@ -25,3 +27,4 @@ public:
 private:
 	unsigned int ID; //  program ID
 };
+

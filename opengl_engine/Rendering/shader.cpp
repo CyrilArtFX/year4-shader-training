@@ -1,6 +1,9 @@
 #include "shader.h"
 
 #include <Maths/Vector3.h>
+#include <fstream>
+#include <sstream>
+#include <iostream>
 
 //  TODO for later implementation of tessellation and geometry shaders in the real engine :
 //  do 5 functions for each shader (that handle the null) and call them in the constructor (instead of doing 5161 if conditions)

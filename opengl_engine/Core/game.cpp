@@ -1,10 +1,8 @@
 #include "game.h"
 
 #include <Rendering/shader.h>
-#include <Objects/object.h>
 
-#include <Materials/litMaterialDirLight.h>
-#include <Materials/tessellationMaterial.h>
+#include <iostream>
 
 
 Game::Game()
@@ -16,6 +14,8 @@ bool Game::initialize(int wndw_width, int wndw_height, std::string wndw_name, bo
 {
 	//  create window and initialize glfw
 	window = std::make_unique<Window>(wndw_width, wndw_height, wndw_name, wndw_capturemouse);
+	windowWidth = wndw_width;
+	windowHeight = wndw_height;
 
 	GLFWwindow* glWindow = window->getGLFWwindow();
 	if (glWindow == NULL)
@@ -74,82 +74,41 @@ void Game::run()
 {
 	//  run initialization
 
-	camera = std::make_unique<Camera>(Vector3{ 0.0f, 0.0f, -3.0f });
+	Shader squareShader("Shaders/compute.vert", "Shaders/compute.frag");
 
-
-	//  build and compile shaders
-	Shader litObjectShaderDirLight("Shaders/object_lit.vert", "Shaders/object_lit_dirlight.frag");
-	Shader tessellationShader("Shaders/tessellation.vert", "Shaders/tessellation.frag", "Shaders/tessellation.tesc", "Shaders/tessellation.tese");
-
-	//  manually set the textures unit on the shader (need to be done only once)
-	litObjectShaderDirLight.use(); //  activate the shader on which you want to set the texture unit before doing it
-	litObjectShaderDirLight.setInt("material.diffuse", 0);
-	litObjectShaderDirLight.setInt("material.specular", 1);
-
-
-	//  create textures
-	std::shared_ptr<Texture> container_diffuse = std::make_shared<Texture>("Resources/container2.png", GL_RGBA, false);
-	std::shared_ptr<Texture> container_specular = std::make_shared<Texture>("Resources/container2_specular.png", GL_RGBA, false);
-
-
-
-	//  cube vertices data
-	float cubeVertices[] = {
-		// positions           // normals           // texture coords
-		-0.5f, -0.5f, -0.5f,   0.0f,  0.0f, -1.0f,   0.0f, 0.0f,
-		 0.5f, -0.5f, -0.5f,   0.0f,  0.0f, -1.0f,   1.0f, 0.0f,
-		 0.5f,  0.5f, -0.5f,   0.0f,  0.0f, -1.0f,   1.0f, 1.0f,
-		 0.5f,  0.5f, -0.5f,   0.0f,  0.0f, -1.0f,   1.0f, 1.0f,
-		-0.5f,  0.5f, -0.5f,   0.0f,  0.0f, -1.0f,   0.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f,   0.0f,  0.0f, -1.0f,   0.0f, 0.0f,
-
-		-0.5f, -0.5f,  0.5f,   0.0f,  0.0f,  1.0f,   0.0f, 0.0f,
-		 0.5f, -0.5f,  0.5f,   0.0f,  0.0f,  1.0f,   1.0f, 0.0f,
-		 0.5f,  0.5f,  0.5f,   0.0f,  0.0f,  1.0f,   1.0f, 1.0f,
-		 0.5f,  0.5f,  0.5f,   0.0f,  0.0f,  1.0f,   1.0f, 1.0f,
-		-0.5f,  0.5f,  0.5f,   0.0f,  0.0f,  1.0f,   0.0f, 1.0f,
-		-0.5f, -0.5f,  0.5f,   0.0f,  0.0f,  1.0f,   0.0f, 0.0f,
-
-		-0.5f,  0.5f,  0.5f,  -1.0f,  0.0f,  0.0f,   1.0f, 0.0f,
-		-0.5f,  0.5f, -0.5f,  -1.0f,  0.0f,  0.0f,   1.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f,  -1.0f,  0.0f,  0.0f,   0.0f, 1.0f,
-		-0.5f, -0.5f, -0.5f,  -1.0f,  0.0f,  0.0f,   0.0f, 1.0f,
-		-0.5f, -0.5f,  0.5f,  -1.0f,  0.0f,  0.0f,   0.0f, 0.0f,
-		-0.5f,  0.5f,  0.5f,  -1.0f,  0.0f,  0.0f,   1.0f, 0.0f,
-
-		 0.5f,  0.5f,  0.5f,   1.0f,  0.0f,  0.0f,   1.0f, 0.0f,
-		 0.5f,  0.5f, -0.5f,   1.0f,  0.0f,  0.0f,   1.0f, 1.0f,
-		 0.5f, -0.5f, -0.5f,   1.0f,  0.0f,  0.0f,   0.0f, 1.0f,
-		 0.5f, -0.5f, -0.5f,   1.0f,  0.0f,  0.0f,   0.0f, 1.0f,
-		 0.5f, -0.5f,  0.5f,   1.0f,  0.0f,  0.0f,   0.0f, 0.0f,
-		 0.5f,  0.5f,  0.5f,   1.0f,  0.0f,  0.0f,   1.0f, 0.0f,
-
-		-0.5f, -0.5f, -0.5f,   0.0f, -1.0f,  0.0f,   0.0f, 1.0f,
-		 0.5f, -0.5f, -0.5f,   0.0f, -1.0f,  0.0f,   1.0f, 1.0f,
-		 0.5f, -0.5f,  0.5f,   0.0f, -1.0f,  0.0f,   1.0f, 0.0f,
-		 0.5f, -0.5f,  0.5f,   0.0f, -1.0f,  0.0f,   1.0f, 0.0f,
-		-0.5f, -0.5f,  0.5f,   0.0f, -1.0f,  0.0f,   0.0f, 0.0f,
-		-0.5f, -0.5f, -0.5f,   0.0f, -1.0f,  0.0f,   0.0f, 1.0f,
-		
-		-0.5f,  0.5f, -0.5f,   0.0f,  1.0f,  0.0f,   0.0f, 1.0f,
-		 0.5f,  0.5f, -0.5f,   0.0f,  1.0f,  0.0f,   1.0f, 1.0f,
-		 0.5f,  0.5f,  0.5f,   0.0f,  1.0f,  0.0f,   1.0f, 0.0f,
-		 0.5f,  0.5f,  0.5f,   0.0f,  1.0f,  0.0f,   1.0f, 0.0f,
-		-0.5f,  0.5f,  0.5f,   0.0f,  1.0f,  0.0f,   0.0f, 0.0f,
-		-0.5f,  0.5f, -0.5f,   0.0f,  1.0f,  0.0f,   0.0f, 1.0f
+	//  square vertices data
+	float squareVertices[] =
+	{
+		 1.0f,  1.0f, 0.0f,
+		 1.0f, -1.0f, 0.0f,
+		-1.0f, -1.0f, 0.0f,
+		-1.0f,  1.0f, 0.0f
 	};
 
-	std::shared_ptr<LitMaterialDirLight> containerMat = std::make_shared<LitMaterialDirLight>(litObjectShaderDirLight, container_diffuse, container_specular);
-	std::shared_ptr<TessellationMaterial> tesselationMat = std::make_shared<TessellationMaterial>(tessellationShader);
+	unsigned int squareIndices[] = 
+	{
+		0, 1, 3,
+		1, 2, 3 
+	};
 
-	Object cube_1(containerMat, tesselationMat, cubeVertices, 36);
-	Object cube_2(containerMat, tesselationMat, cubeVertices, 36);
-	Object cube_3(containerMat, tesselationMat, cubeVertices, 36);
+	unsigned int VBO, VAO, EBO;
+	glGenVertexArrays(1, &VAO);
+	glGenBuffers(1, &VBO);
+	glGenBuffers(1, &EBO);
 
-	cube_1.setPosition(Vector3{ 0.0f, 0.0f, 0.0f });
-	cube_2.setPosition(Vector3{ 2.0f, 1.5f, 2.0f });
-	cube_3.setPosition(Vector3{ 2.0f, -1.0f, -1.0f });
+	glBindVertexArray(VAO);
 
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(squareVertices), squareVertices, GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(squareIndices), squareIndices, GL_STATIC_DRAW);
+
+	// position attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
+	
 
 
 
@@ -174,74 +133,23 @@ void Game::run()
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT); //  clear window with flat color
 
 
-
-		float timeValue = glfwGetTime();
-
-		if (rgbActivated)
-		{
-			lightColor = Color::HSV(static_cast<int>(timeValue * 150.0f) % 360, 100.0f, 100.0f);
-		}
-		else
-		{
-			lightColor = Color::white;
-		}
-
-		Vector3 lightDirection = Vector3{ Maths::cos(lightRotationFactor), -1.0f, Maths::sin(lightRotationFactor) };
-
-		if (tessellationActivated)
-		{
-			cube_1.TriggerChangeMaterial(true);
-			cube_2.TriggerChangeMaterial(true);
-			cube_3.TriggerChangeMaterial(true);
-		}
-		else
-		{
-			cube_1.TriggerChangeMaterial(false);
-			cube_2.TriggerChangeMaterial(false);
-			cube_3.TriggerChangeMaterial(false);
-		}
-
-
-
-
-
 		//  draw
-		Matrix4 view = camera->GetViewMatrix();
-		Matrix4 projection = Matrix4::createPerspectiveFOV(Maths::toRadians(camera->getFov()), window->getWidth(), window->getHeigth(), 0.1f, 100.0f);
+		squareShader.use();
+		squareShader.setFloat("scale", 0.02f);
 
+		//  computed squares part
+		squareShader.setVec3("position", 0.5f, 0.0f, 0.0f);
+		squareShader.setVec3("color", 0.0f, 0.0f, 1.0f);
 
-		if (tessellationActivated)
-		{
-			tessellationShader.use();
+		glBindVertexArray(VAO);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-			glPointSize(5.0f);
+		//  mouse square part
+		squareShader.setVec3("position", mouseXPos / windowWidth, mouseYPos / windowHeight, 0.0f);
+		squareShader.setVec3("color", 1.0f, 0.0f, 0.0f);
 
-			tessellationShader.setMatrix4("view", view.getAsFloatPtr());
-			tessellationShader.setMatrix4("projection", projection.getAsFloatPtr());
-
-			tessellationShader.setFloat("inner", tessLevelInner);
-			tessellationShader.setFloat("outer", tessLevelOuter);
-		}
-		else
-		{
-			litObjectShaderDirLight.use();
-
-			litObjectShaderDirLight.setVec3("light.ambient", lightColor.toVector() * 0.1f);
-			litObjectShaderDirLight.setVec3("light.diffuse", lightColor.toVector() * 0.7f);
-			litObjectShaderDirLight.setVec3("light.specular", 1.0f, 1.0f, 1.0f);
-			litObjectShaderDirLight.setVec3("light.direction", lightDirection);
-
-			litObjectShaderDirLight.setVec3("viewPos", camera->getPosition());
-
-			litObjectShaderDirLight.setMatrix4("view", view.getAsFloatPtr());
-			litObjectShaderDirLight.setMatrix4("projection", projection.getAsFloatPtr());
-		}
-
-
-		cube_1.draw(tessellationActivated);
-		cube_2.draw(tessellationActivated);
-		cube_3.draw(tessellationActivated);
-
+		glBindVertexArray(VAO);
+		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
 
 		//  events and buffer swap
@@ -251,10 +159,10 @@ void Game::run()
 
 
 	//  delete all resources that are not necessary anymore
-	cube_1.deleteObject();
-	cube_2.deleteObject();
-	cube_3.deleteObject();
-	litObjectShaderDirLight.deleteProgram();
+	glDeleteVertexArrays(1, &VAO);
+	glDeleteBuffers(1, &VBO);
+	glDeleteBuffers(1, &EBO);
+	squareShader.deleteProgram();
 }
 
 
@@ -275,85 +183,6 @@ void Game::processInput(GLFWwindow* glWindow)
 	{
 		glfwSetWindowShouldClose(glWindow, true);
 	}
-
-	//  move camera
-	if (glfwGetKey(glWindow, GLFW_KEY_W) == GLFW_PRESS)
-		camera->ProcessKeyboard(Forward, deltaTime);
-
-	if (glfwGetKey(glWindow, GLFW_KEY_S) == GLFW_PRESS)
-		camera->ProcessKeyboard(Backward, deltaTime);
-
-	if (glfwGetKey(glWindow, GLFW_KEY_A) == GLFW_PRESS)
-		camera->ProcessKeyboard(Left, deltaTime);
-
-	if (glfwGetKey(glWindow, GLFW_KEY_D) == GLFW_PRESS)
-		camera->ProcessKeyboard(Right, deltaTime);
-
-	if (glfwGetKey(glWindow, GLFW_KEY_SPACE) == GLFW_PRESS)
-		camera->ProcessKeyboard(Up, deltaTime);
-
-	if (glfwGetKey(glWindow, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS)
-		camera->ProcessKeyboard(Down, deltaTime);
-
-
-	//  TODO : create a full system for inputs to allow press one frame 
-
-
-	//  trigger rgb
-	if (glfwGetKey(glWindow, GLFW_KEY_SEMICOLON) == GLFW_PRESS)
-	{
-		if(!rgbTrigger) rgbActivated = !rgbActivated;
-		rgbTrigger = true;
-	}
-	if (glfwGetKey(glWindow, GLFW_KEY_SEMICOLON) == GLFW_RELEASE)
-	{
-		rgbTrigger = false;
-	}
-
-
-	//  rotate light
-	if (glfwGetKey(glWindow, GLFW_KEY_P) == GLFW_PRESS)
-		lightRotationFactor += 5.0f * deltaTime;
-
-
-	//  trigger tessellation
-	if (glfwGetKey(glWindow, GLFW_KEY_T) == GLFW_PRESS)
-	{
-		if (!tessellationTrigger) tessellationActivated = !tessellationActivated;
-		tessellationTrigger = true;
-	}
-	if (glfwGetKey(glWindow, GLFW_KEY_T) == GLFW_RELEASE)
-	{
-		tessellationTrigger = false;
-	}
-
-
-	//  change tessellation inner and outer levels
-	if (glfwGetKey(glWindow, GLFW_KEY_UP) == GLFW_PRESS)
-	{
-		if (!tessLevelTrigger) tessLevelInner = Maths::min(tessLevelInner + 1, 10);
-		tessLevelTrigger = true;
-	}
-	if (glfwGetKey(glWindow, GLFW_KEY_DOWN) == GLFW_PRESS)
-	{
-		if (!tessLevelTrigger) tessLevelInner = Maths::max(tessLevelInner - 1, 1);
-		tessLevelTrigger = true;
-	}
-	if (glfwGetKey(glWindow, GLFW_KEY_LEFT) == GLFW_PRESS)
-	{
-		if (!tessLevelTrigger) tessLevelOuter = Maths::max(tessLevelOuter - 1, 1);
-		tessLevelTrigger = true;
-	}
-	if (glfwGetKey(glWindow, GLFW_KEY_RIGHT) == GLFW_PRESS)
-	{
-		if (!tessLevelTrigger) tessLevelOuter = Maths::min(tessLevelOuter + 1, 10);
-		tessLevelTrigger = true;
-	}
-	if (glfwGetKey(glWindow, GLFW_KEY_UP) == GLFW_RELEASE && glfwGetKey(glWindow, GLFW_KEY_DOWN) == GLFW_RELEASE &&
-		glfwGetKey(glWindow, GLFW_KEY_LEFT) == GLFW_RELEASE && glfwGetKey(glWindow, GLFW_KEY_RIGHT) == GLFW_RELEASE)
-	{
-		tessLevelTrigger = false;
-	}
 }
 
 
@@ -362,6 +191,8 @@ void Game::windowResize(GLFWwindow* glWindow, int width, int height)
 {
 	glViewport(0, 0, width, height); //  resize OpenGL viewport when GLFW is resized
 	window->changeSize(width, height);
+	windowWidth = width;
+	windowHeight = height;
 }
 
 void Game::processMouse(GLFWwindow* glWindow, double xpos, double ypos)
@@ -378,10 +209,10 @@ void Game::processMouse(GLFWwindow* glWindow, double xpos, double ypos)
 	lastX = xpos;
 	lastY = ypos;
 
-	camera->ProcessMouseMovement(xoffset, yoffset);
+	mouseXPos = Maths::clamp(mouseXPos - xoffset, -windowWidth, windowWidth);
+	mouseYPos = Maths::clamp(mouseYPos + yoffset, -windowHeight, windowHeight);
 }
 
 void Game::processScroll(GLFWwindow* glWindow, double xoffset, double yoffset)
 {
-	camera->ProcessMouseScroll(float(yoffset));
 }

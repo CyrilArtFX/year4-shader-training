@@ -133,6 +133,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="ComputeShader\ComputeShader.cpp" />
     <ClCompile Include="Core\game.cpp" />
     <ClCompile Include="glad.c" />
     <ClCompile Include="main.cpp" />
@@ -152,6 +153,7 @@
     <ClCompile Include="Utils\Color.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="ComputeShader\ComputeShader.h" />
     <ClInclude Include="Core\game.h" />
     <ClInclude Include="Materials\litMaterialDirLight.h" />
     <ClInclude Include="Maths\Maths.h" />
@@ -171,6 +173,9 @@
     <ClInclude Include="Utils\Color.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="Shaders\compute.frag" />
+    <None Include="Shaders\compute.glsl" />
+    <None Include="Shaders\compute.vert" />
     <None Include="Shaders\object_lit.frag" />
     <None Include="Shaders\object_lit.vert" />
     <None Include="Shaders\object_lit_dirlight.frag" />

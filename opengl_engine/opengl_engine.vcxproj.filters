@@ -66,6 +66,9 @@
     <ClCompile Include="Utils\Color.cpp">
       <Filter>Fichiers sources</Filter>
     </ClCompile>
+    <ClCompile Include="ComputeShader\ComputeShader.cpp">
+      <Filter>Fichiers sources</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Rendering\shader.h">
@@ -119,6 +122,9 @@
     <ClInclude Include="Utils\Color.h">
       <Filter>Fichiers d%27en-tête</Filter>
     </ClInclude>
+    <ClInclude Include="ComputeShader\ComputeShader.h">
+      <Filter>Fichiers d%27en-tête</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <None Include="Shaders\object_lit.vert" />
@@ -128,5 +134,8 @@
     <None Include="Shaders\tessellation.frag" />
     <None Include="Shaders\tessellation.tesc" />
     <None Include="Shaders\tessellation.tese" />
+    <None Include="Shaders\compute.frag" />
+    <None Include="Shaders\compute.vert" />
+    <None Include="Shaders\compute.glsl" />
   </ItemGroup>
 </Project>
